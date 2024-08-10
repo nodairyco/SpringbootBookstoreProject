@@ -11,14 +11,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
-import javax.swing.*;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
 
 
 @RestController
@@ -37,13 +35,20 @@ public class UserController {
 
     @GetMapping(path = "/get/{userId}")
     public ResponseEntity<UserDto> getUserById(@PathVariable(name = "userId") Long id){
-        return userService.getUserById(id).map(
+        return userService.findById(id).map(
                 user -> ResponseEntity.ok(mapper.mapTo(user))
         ).orElse(
                 ResponseEntity.notFound().build()
         );
     }
 
+    /**
+     * Deletes the user with email specified by Json Web Token <br>
+     * <br>
+     * This method performs safe deletion. Removing the user from all the groups they were part off,
+     * assigning groups where they were admin new random admin and removing from {@code DB}
+     * @return The user we want to delete.
+     */
     @DeleteMapping("/delete_self")
     public ResponseEntity<UserDto> deleteSelf(){
         //get the user that wants to remove itself from the jwt token with email
@@ -66,91 +71,42 @@ public class UserController {
                         a.removeMember(toBeRemoved);
                         if(a.getMembers().isEmpty()){
                             groupService.deleteById(a.getId());
-                            toBeRemoved.setRoles(new HashSet<>());
                             return;
+                        }
+                        if(a.getElderUsers().contains(toBeRemoved)){
+                            a.removeElder(toBeRemoved);
+                        }
+                        if(a.getAdminUser().equals(toBeRemoved)){
+                            makeRandomUserAdmin(a);
                         }
                         groupService.save(a);
                     });
         }
 
-        //check if user is an elder in any group
-        if(!toBeRemoved.getRoles()
-                .stream()
-                .filter(a -> a.startsWith("GROUP_ELDER_"))
-                .toList()
-                .isEmpty()) {
-            //update each group after deleting the user we want to delete
-            groupsWhereDeletedIsMember
-                    .stream()
-                    .filter(a -> a.getElderUsers().contains(toBeRemoved))
-                    .forEach(a -> {
-                        a.removeElder(toBeRemoved);
-                        groupService.save(a);
-                    });
-        }
-
-        //check if user is an admin in any group
-        if(!toBeRemoved.getRoles()
-                .stream()
-                .filter(a -> a.startsWith("GROUP_ADMIN_"))
-                .toList()
-                .isEmpty()) {
-            //get all the groups where the user is admin
-            List<GroupEntity> groupsWhereDeletedIsAdmin = groupService.findByAdminEmail(email);
-            //get a new random admin from elders if elders != empty, else get it from members
-            //if members == empty remove group
-            groupsWhereDeletedIsAdmin
-                    .forEach(a -> {
-                        if (a.getMembers().isEmpty()) {
-                            groupService.deleteById(a.getId());
-                            return;
-                        }
-                        if (a.getElderUsers().isEmpty()) {
-                            // Get random user from group Members
-                            UserEntity toBeMadeAdmin;
-                            try {
-                                 toBeMadeAdmin = userService.findByEmail(a.getMembers()
-                                        .stream()
-                                        .toList()
-                                        .get(
-                                                new Random().nextInt(0, a.getMembers().size() - 1)
-                                        )
-                                        .getEmail()).get();
-                            } catch(IllegalArgumentException i){
-                                 toBeMadeAdmin = userService.findByEmail(a.getMembers()
-                                        .stream()
-                                        .toList()
-                                        .getFirst()
-                                        .getEmail()).get();
-                            }
-                            toBeMadeAdmin.addRole("GROUP_ADMIN_" + a.getId());
-                            toBeMadeAdmin.addRole("GROUP_ELDER_" + a.getId());
-                            a.setAdminUser(userService.save(toBeMadeAdmin));
-                            groupService.save(a);
-                            return;
-                        }
-                        try {
-                            UserEntity toBeMadeAdmin = userService.findByEmail(a.getElderUsers()
-                                    .stream()
-                                    .toList()
-                                    .get(new Random().nextInt(0, a.getElderUsers().size() - 1))
-                                    .getEmail()).get();
-                            toBeMadeAdmin.addRole("GROUP_ADMIN_" + a.getId());
-                            a.setAdminUser(userService.save(toBeMadeAdmin));
-                            groupService.save(a);
-                        }catch (IllegalArgumentException i){
-                            UserEntity toBeMadeAdmin = userService.findByEmail(a.getElderUsers()
-                                    .stream()
-                                    .toList()
-                                    .getFirst()
-                                    .getEmail()).get();
-                            toBeMadeAdmin.addRole("GROUP_ADMIN_" + a.getId());
-                            a.setAdminUser(userService.save(toBeMadeAdmin));
-                            groupService.save(a);
-                        }
-                    });
-        }
         UserEntity removed = userService.deleteById(toBeRemoved.getId());
         return ResponseEntity.ok(mapper.mapTo(removed));
+    }
+
+    /**
+     * This method makes a random user in a group into admin. <br>
+     * The priority is given to {@code group.elderUsers} then {@code group.Members}
+     * @param group this is the group we want to update with new admin user
+     */
+    private void makeRandomUserAdmin(GroupEntity group){
+        // check if a group has elderUsers. if true make copy them in the set else the set becomes a set of members
+        Set<UserEntity> eldersOrMembers = (group.getElderUsers().isEmpty())? group.getMembers() : group.getElderUsers();
+
+        //if the size of the user set is 1 we set the random int as 0, to not get illegalArgumentException from nextInt
+        int rand = (eldersOrMembers.size() == 1)? 0:new Random().nextInt(0, eldersOrMembers.size() - 1);
+        UserEntity toBeMadeAdmin = userService.findByEmail(eldersOrMembers
+                .stream()
+                .toList()
+                .get(rand)
+                .getEmail()).get();
+        toBeMadeAdmin.addRole("GROUP_ADMIN_" + group.getId());
+        if(group.getElderUsers().isEmpty())
+            toBeMadeAdmin.addRole("GROUP_ELDER_" + group.getId());
+        group.setAdminUser(userService.save(toBeMadeAdmin));
+        groupService.save(group);
     }
 }

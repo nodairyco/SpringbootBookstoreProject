@@ -26,7 +26,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Optional<UserEntity> getUserById(Long id) {
+    public Optional<UserEntity> findById(Long id) {
         return repository.findById(id);
     }
 
@@ -61,13 +61,11 @@ public class UserServiceImpl implements UserService {
     public Page<BookEntity> getAllBooks(Set<UserEntity> lst, Pageable pageable) {
         Page<UserEntity> userPage = repository.findAll(pageable);
 
-        // Stream through the users in the current page, filter them, and collect their books
         List<BookEntity> books = userPage.getContent().stream()
-                .filter(lst::contains) // Keep only users that are in the provided set
-                .flatMap(user -> user.getPurchasedBooks().stream()) // Flatten the stream of books from each user
-                .collect(Collectors.toList()); // Collect all books into a list
+                .filter(lst::contains)
+                .flatMap(user -> user.getPurchasedBooks().stream())
+                .collect(Collectors.toList());
 
-        // Create a sublist based on the pagination details
         int start = (int) pageable.getOffset();
         int end = Math.min((start + pageable.getPageSize()), books.size());
         List<BookEntity> pagedBooks = books.subList(start, end);
@@ -77,7 +75,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserEntity deleteById(Long id) {
-        UserEntity res = getUserById(id).get();
+        UserEntity res = findById(id).get();
         repository.delete(res);
         return res;
     }

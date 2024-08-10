@@ -10,7 +10,7 @@ import java.util.Set;
 
 public interface UserService {
     UserEntity save(UserEntity userEntity);
-    Optional<UserEntity> getUserById(Long id);
+    Optional<UserEntity> findById(Long id);
     Page<UserEntity> getAll(Pageable pageable);
     UserEntity partialUpdateUser(Long id, UserEntity userEntity);
     Optional<UserEntity> findByEmail(String email);
