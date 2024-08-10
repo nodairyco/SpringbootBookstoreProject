@@ -1,13 +1,11 @@
 package com.proj.app.bookstore.repositories;
 
 import com.proj.app.bookstore.domain.entities.GroupEntity;
-import com.proj.app.bookstore.domain.entities.UserEntity;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.PagingAndSortingRepository;
 
 import java.util.List;
-import java.util.Set;
 
 public interface GroupRepository extends CrudRepository<GroupEntity, Long>,
         PagingAndSortingRepository<GroupEntity, Long> {

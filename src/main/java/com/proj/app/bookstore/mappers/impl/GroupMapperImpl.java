@@ -5,13 +5,11 @@ import com.proj.app.bookstore.domain.dto.UserDto;
 import com.proj.app.bookstore.domain.entities.GroupEntity;
 import com.proj.app.bookstore.domain.entities.UserEntity;
 import com.proj.app.bookstore.mappers.Mapper;
-import com.proj.app.bookstore.repositories.UserRepository;
 import com.proj.app.bookstore.services.UserService;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Component;
 
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Component
