@@ -1,23 +1,18 @@
 package com.proj.app.bookstore.services.impl;
 
-import com.proj.app.bookstore.domain.entities.BookEntity;
 import com.proj.app.bookstore.domain.entities.UserEntity;
 import com.proj.app.bookstore.repositories.UserRepository;
-import com.proj.app.bookstore.services.UserService;
+import com.proj.app.bookstore.services.EntityService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class UserServiceImpl implements UserService {
+public class UserServiceImpl implements EntityService<UserEntity, Long> {
     private final UserRepository repository;
 
     @Override
@@ -31,12 +26,17 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Page<UserEntity> getAll(Pageable pageable) {
+    public Page<UserEntity> findAll(Pageable pageable) {
         return repository.findAll(pageable);
     }
 
     @Override
-    public UserEntity partialUpdateUser(Long id, UserEntity userEntity) {
+    public Iterable<UserEntity> findAll() {
+        return repository.findAll();
+    }
+
+    @Override
+    public UserEntity partialUpdateById(Long id, UserEntity userEntity) {
         userEntity.setId(id);
         return repository.findById(id).map(
                 user -> {
@@ -50,27 +50,6 @@ public class UserServiceImpl implements UserService {
     @Override
     public Optional<UserEntity> findByEmail(String email) {
         return repository.findByEmail(email);
-    }
-
-    @Override
-    public void saveAll(Iterable<UserEntity> lst) {
-        repository.saveAll(lst);
-    }
-
-    @Override
-    public Page<BookEntity> getAllBooks(Set<UserEntity> lst, Pageable pageable) {
-        Page<UserEntity> userPage = repository.findAll(pageable);
-
-        List<BookEntity> books = userPage.getContent().stream()
-                .filter(lst::contains)
-                .flatMap(user -> user.getPurchasedBooks().stream())
-                .collect(Collectors.toList());
-
-        int start = (int) pageable.getOffset();
-        int end = Math.min((start + pageable.getPageSize()), books.size());
-        List<BookEntity> pagedBooks = books.subList(start, end);
-
-        return new PageImpl<>(pagedBooks, pageable, books.size());
     }
 
     @Override
