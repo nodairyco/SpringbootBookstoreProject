@@ -6,7 +6,7 @@ import com.proj.app.bookstore.domain.dto.UserDto;
 import com.proj.app.bookstore.domain.entities.UserEntity;
 import com.proj.app.bookstore.mappers.Mapper;
 import com.proj.app.bookstore.services.AuthenticationService;
-import com.proj.app.bookstore.services.UserService;
+import com.proj.app.bookstore.services.EntityService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class AuthenticationController {
     private final AuthenticationService authenticationService;
-    private final UserService userService;
+    private final EntityService<UserEntity, Long> userService;
     private final Mapper<UserEntity, UserDto> mapper;
 
     @PostMapping(path = "/register")

@@ -5,7 +5,7 @@ import com.proj.app.bookstore.domain.dto.UserDto;
 import com.proj.app.bookstore.domain.entities.GroupEntity;
 import com.proj.app.bookstore.domain.entities.UserEntity;
 import com.proj.app.bookstore.mappers.Mapper;
-import com.proj.app.bookstore.services.UserService;
+import com.proj.app.bookstore.services.EntityService;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Component;
@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 public class GroupMapperImpl implements Mapper<GroupEntity, GroupDto> {
     private final ModelMapper mapper;
     private final Mapper<UserEntity, UserDto> userMapper;
-    private final UserService userService;
+    private final EntityService<UserEntity, Long> userService;
     @Override
     public GroupDto mapTo(GroupEntity groupEntity) {
         GroupDto mapped = mapper.map(groupEntity, GroupDto.class);

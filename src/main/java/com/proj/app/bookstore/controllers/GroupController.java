@@ -6,8 +6,7 @@ import com.proj.app.bookstore.domain.entities.BookEntity;
 import com.proj.app.bookstore.domain.entities.GroupEntity;
 import com.proj.app.bookstore.domain.entities.UserEntity;
 import com.proj.app.bookstore.mappers.Mapper;
-import com.proj.app.bookstore.services.GroupService;
-import com.proj.app.bookstore.services.UserService;
+import com.proj.app.bookstore.services.EntityService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -25,9 +24,9 @@ import java.util.Set;
 @RequestMapping(path = "/bookstore/group/")
 @RequiredArgsConstructor
 public class GroupController {
-    private final GroupService groupService;
+    private final EntityService<GroupEntity, Long> groupService;
+    private final EntityService<UserEntity, Long> userService;
     private final Mapper<GroupEntity, GroupDto> mapper;
-    private final UserService userService;
     private final Mapper<BookEntity, BookDto> bookMapper;
 
 
@@ -44,7 +43,7 @@ public class GroupController {
     @PreAuthorize("hasAnyAuthority('GROUP_ADMIN_' + #groupId, 'GROUP_ELDER_' + #groupId)")
     @GetMapping("/get/{groupId}")
     public ResponseEntity<GroupDto> getGroup(@PathVariable("groupId") Long groupId){
-        Optional<GroupEntity> currentGroupOpt = groupService.getById(groupId);
+        Optional<GroupEntity> currentGroupOpt = groupService.findById(groupId);
         if(currentGroupOpt.isEmpty())
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         GroupEntity currentGroup = currentGroupOpt.get();
@@ -53,7 +52,7 @@ public class GroupController {
 
     @GetMapping("/get")
     public Page<GroupDto> getGroups(Pageable pageable){
-        return groupService.getAll(pageable).map(mapper::mapTo);
+        return groupService.findAll(pageable).map(mapper::mapTo);
     }
 
     @PreAuthorize("hasAnyAuthority('GROUP_ADMIN_' + #groupId, 'GROUP_ELDER_' + #groupId)")
@@ -132,7 +131,7 @@ public class GroupController {
     @DeleteMapping("/delete/{groupId}")
     public ResponseEntity<String> deleteGroup(@PathVariable Long groupId){
         //check group validity
-        Optional<GroupEntity> groupOpt = groupService.getById(groupId);
+        Optional<GroupEntity> groupOpt = groupService.findById(groupId);
         if(groupOpt.isEmpty())
             return ResponseEntity.notFound().build();
         var group = groupOpt.get();
@@ -158,8 +157,8 @@ public class GroupController {
     @PreAuthorize("hasAuthority('GROUP_MEMBER_') + #groupId")
     @GetMapping("/members_books")
     public Page<BookDto> getMemberBooks(@RequestParam("groupId") Long groupId, Pageable pageable){
-        return userService
-                .getAllBooks(groupService.getById(groupId).get().getMembers(), pageable)
+        return groupService
+                .getAllMemberBooks(groupId, pageable)
                 .map(bookMapper::mapTo);
     }
 
@@ -216,7 +215,7 @@ public class GroupController {
      */
     private Pair<GroupEntity, UserEntity> checkValidityAndReturn
             (Long groupId, Long userId){
-        Optional<GroupEntity> groupOpt = groupService.getById(groupId);
+        Optional<GroupEntity> groupOpt = groupService.findById(groupId);
         Optional<UserEntity> userOpt = userService.findById(userId);
 
         if(groupOpt.isEmpty() || userOpt.isEmpty())
