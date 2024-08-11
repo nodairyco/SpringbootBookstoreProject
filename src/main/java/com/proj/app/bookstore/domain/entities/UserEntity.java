@@ -117,4 +117,8 @@ public class UserEntity implements UserDetails {
     public void addBook(BookEntity book){
         purchasedBooks.add(book);
     }
+
+    public void removeBook(BookEntity book){
+        purchasedBooks.remove(book);
+    }
 }

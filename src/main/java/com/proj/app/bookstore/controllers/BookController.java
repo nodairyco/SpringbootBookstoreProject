@@ -4,9 +4,9 @@ import com.proj.app.bookstore.domain.dto.BookDto;
 import com.proj.app.bookstore.domain.entities.BookEntity;
 import com.proj.app.bookstore.domain.entities.UserEntity;
 import com.proj.app.bookstore.mappers.Mapper;
+import com.proj.app.bookstore.repositories.UserRepository;
 import com.proj.app.bookstore.services.EntityService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
@@ -72,16 +72,51 @@ public class BookController {
                 .author(bookDto.getAuthor())
                 .build();
 
+        BookEntity original;
+        BookEntity mappedBook;
         try{
-            mapped = bookService.partialUpdateById(isbn, mapped);
-        }catch (IllegalArgumentException i){
+            original = bookService.findById(isbn).get();
+            mappedBook = bookService.partialUpdateById(isbn, mapped);
+        }catch (Exception i){
             return ResponseEntity.of(
                     ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, "illegal isbn")
             ).build();
         }
+        List<UserEntity> purchasedThisBook =
+                userService.findAllByBookIsbn(isbn);
+        purchasedThisBook.forEach(
+                u -> {
+                    u.removeBook(original);
+                    u.addBook(mappedBook);
+                    userService.save(u);
+                }
+        );
 
         mapped = bookService.save(mapped);
         return ResponseEntity.ok(mapper.mapTo(mapped));
+    }
+
+    @CheckUploader
+    @DeleteMapping("/delete/{isbn}")
+    public ResponseEntity<BookDto> deleteById(@PathVariable("isbn") String isbn){
+        BookEntity toBeDeleted;
+        try{
+            toBeDeleted = checkBookValidity(isbn);
+        } catch (Exception i){
+            return ResponseEntity.of(
+                    ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, "illegal isbn")
+            ).build();
+        }
+        List<UserEntity> purchasedThisBook =
+                userService.findAllByBookIsbn(isbn);
+        purchasedThisBook.forEach(
+                u -> {
+                    u.removeBook(toBeDeleted);
+                    userService.save(u);
+                }
+        );
+        BookEntity deleted = bookService.deleteById(toBeDeleted.getIsbn());
+        return ResponseEntity.ok(mapper.mapTo(deleted));
     }
 
     private BookEntity checkBookValidity(String isbn){

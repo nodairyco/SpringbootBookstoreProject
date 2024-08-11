@@ -8,6 +8,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -59,4 +60,8 @@ public class UserServiceImpl implements EntityService<UserEntity, Long> {
         return res;
     }
 
+    @Override
+    public List<UserEntity> findAllByBookIsbn(String isbn){
+        return repository.findAllByBookIsbn(isbn);
+    }
 }
