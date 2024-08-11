@@ -1,7 +1,7 @@
 First project using Springboot. 
 
 # Bookstore
-### Version 0.5
+### Version 0.75
 ---
 Dependencies:
 - Lombok (easy creation of Objects)
@@ -17,10 +17,11 @@ Dependencies:
 ---
 The whole idea is that Users can login, buy books, create groups and share books with other people in a group.
 
-So far I've implemented 70% of the program. 
+So far I've implemented 90% of the program. 
 Users can login, authenticate, safely delete accounts, and create groups.
 In groups the role higherarchy goes as ``GROUP_ADMIN_`` > ``GROU_ELDER_`` > ``GROUP_MEMBER``. Admins can do anything they wish. Elders can only invite and remove members. Members can see the shared books and the members in a group.
-I have implemented only mapping from BookDto to BookEntity for books.
+Everything about books have been implemented, whats left are testing and fixing some bugs.
+Maybe I'll add some updates later.
 
 ---
 btw u can do this in intellij
