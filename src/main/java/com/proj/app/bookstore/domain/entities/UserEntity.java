@@ -75,13 +75,6 @@ public class UserEntity implements UserDetails {
         roles.add(role);
     }
 
-    public void addElderInGroup(GroupEntity group){
-        elderInGroups.add(group);
-    }
-
-    public void addMemberIn(GroupEntity group){
-        membersIn.add(group);
-    }
 
     public String getUsername() {
         return email;
@@ -119,5 +112,9 @@ public class UserEntity implements UserDetails {
 
     public void removeRole(String role){
         roles.remove(role);
+    }
+
+    public void addBook(BookEntity book){
+        purchasedBooks.add(book);
     }
 }

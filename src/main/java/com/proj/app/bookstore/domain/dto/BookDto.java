@@ -15,6 +15,7 @@ public class BookDto {
     private String isbn;
     private String author;
     private String title;
+    private Integer price;
     private String uploaderEmail;
     private LocalDate uploadDate;
 }
