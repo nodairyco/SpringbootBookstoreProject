@@ -26,6 +26,8 @@ public class BookEntity {
 
     private String title;
 
+    private Integer price;
+
     private LocalDate uploadDate;
 
     @ManyToMany(mappedBy = "purchasedBooks")

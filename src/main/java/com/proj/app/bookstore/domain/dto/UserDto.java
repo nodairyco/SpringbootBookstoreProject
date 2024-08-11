@@ -25,6 +25,10 @@ public class UserDto {
 
     private Set<String> roles;
 
+    private Integer money;
+
+    private Set<String> purchasedBookIsbn;
+
     @Override
     public int hashCode(){
         return Objects.hash(id, name, email, password);
